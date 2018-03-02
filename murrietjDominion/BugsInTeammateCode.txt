@@ -1,0 +1,92 @@
+Title: Segmentation Fault when there are fewer than 2 Treasures in the deck/discard
+
+Class:
+Program Crash (Segmentation Fault)
+
+Date: 2/25/2018   
+Reported By: Chris Wittich
+Email: wittichc@oregonstate.edu
+
+
+Product: dominion	Version: CS362-004-W2018-murrietj
+Platform: Linux	Version: flip3.engr.oregonstate.edu
+Browser: N/A	Version: N/A
+URL: N/A
+
+Is it reproducible: Yes, particularly in high volume of tests where the contents of the deck/discard are completely randomized
+
+Description
+===========
+During high volume, randomized testing, the system would throw a segmentation fault at a random iteration of the test.  Upon further investigation I discovered that this occurred because during these iterations the function would go beyond the bounds of the deck array in the gamestate struct.  This was due to the fact that the contents of the combined deck/discard arrays had fewer than 2 treasure cards in them.
+
+
+Steps to Produce/Reproduce
+--------------------------
+Call the adventurerEffect function after setting the contents of the deck/discard pile so that there are less than 2 treasure cards in both arrays combined.
+
+
+Expected Results
+----------------
+Cards should be drawn from the deck until 2 treasure cards have been drawn, shuffling the discard into the deck if needed.  All cards drawn that are not treasure cards should then be placed in the discard pile.
+
+
+Actual Results
+--------------
+The program terminates with a segmentation fault error being thrown.
+
+
+
+Workarounds
+-----------
+The likelihood of this occurring during an actual game are very low, though not impossible. (It would be a very bad strategy for a player to trash all their, or even most of their treasure cards, such that they could draw all of them into their hand at one time.)  The most likely scenario where this might occur is a player manages to play multiple cards that allow them to draw cards into their hand, thus depleting their deck to the point that there are not enough treasures left.
+
+Discovery Process
+-----------
+After discovering that the bug was present I used gdb to isolate what line was throwing the segmentation fault.  Once I had isolated the line, I used trace statements to track the values that were being changed in that area of the code (inside the while loop).  It was at this point that I discovered that the loop was iterating beyond the bounds of the deck array.  The final step was to add a trace statement to the beginning of my test function to print out the number of treasures contained in the deck/discard arrays prior to calling the function.
+
+------------------------------------------------------------------------------------------------------------------------------------------
+Title: Incorrect discard when calling adventurerEffect function.
+
+Class:
+Feature error
+
+Date: 2/25/2018
+Reported By: Chris Wittich
+Email: wittichc@oregonstate.edu
+
+
+Product: dominion	Version:
+Platform: Linux	Version: flip3.engr.oregonstate.edu
+Browser: N/A	Version: N/A
+URL: N/A
+
+Is it reproducible: Yes
+
+Description
+===========
+When the adventurerEffect function is called, if it does not segmentation fault, the function returns one fewer cards to the discard pile then it ought to.
+
+
+Steps to Produce/Reproduce
+--------------------------
+Call the adventurerEffect function with at least two treasure cards in the deck and discard arrays combined.
+
+
+Expected Results
+----------------
+The function should draw cards from the deck array until 2 treasure cards are drawn, shuffling in the discard array as needed.  When the second treasure card is drawn, all non-treasure cards should be placed in the discard pile.  This means that with the addition of the adventurer card player to the discard pile and the removal of the two treasure cards from the deck/discard, the total number of cards in the deck/discard ought to be one less than it was before the card was played.
+
+
+Actual Results
+--------------
+The deck/discard total is two less than were in the deck/discard prior to calling the function.
+
+
+Workarounds
+-----------
+At the moment, there are no reported workarounds.
+
+
+Discovery Process
+-----------
+I my initial test I was tracking the total number of cards in the combined deckCount + discardCount both before and after the function was called.  Once I had noted the discrepancy in my unit test results, I began using more refined trace statements to track these variables directly.  Eventually I began printing out the entire contents of both the deck and discard arrays, before and after calling the function.  It was at this point that I noticed that the first non-treasure card to be drawn within the function was not being retuned to the deck when the function was finished.  It was simply disappearing.
